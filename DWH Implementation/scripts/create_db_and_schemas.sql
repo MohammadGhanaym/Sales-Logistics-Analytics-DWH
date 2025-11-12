@@ -1,0 +1,25 @@
+USE master
+
+IF EXISTS (SELECT 1 FROM sys.databases WHERE name = 'DWH_Supply_Chain')
+BEGIN
+	ALTER DATABASE DWH_Supply_Chain SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+	DROP DATABASE DWH_Supply_Chain;
+END
+GO
+
+CREATE DATABASE DWH_Supply_Chain
+GO
+
+USE DWH_Supply_Chain
+GO
+
+CREATE SCHEMA bronze;
+GO
+
+CREATE SCHEMA silver;
+GO
+
+CREATE SCHEMA gold;
+GO
+
+
