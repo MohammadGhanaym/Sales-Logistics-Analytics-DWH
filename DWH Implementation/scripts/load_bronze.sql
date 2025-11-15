@@ -38,12 +38,12 @@ BEGIN
 		PRINT '-----------------------------------------------------------'
 		
 		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.store_departments'
-		TRUNCATE TABLE bronze.store_departments
+		PRINT '>> Truncating Table: bronze.erp_store_departments'
+		TRUNCATE TABLE bronze.erp_store_departments
 
-		PRINT '>> Inserting Data into: bronze.store_departments'
-		BULK INSERT bronze.store_departments
-		FROM 'F:\Workspace\Data-Analysis-Projects-2025\Sales-Logistics-Analytics-DWH\datasets\Store\departments.csv'
+		PRINT '>> Inserting Data into: bronze.erp_store_departments'
+		BULK INSERT bronze.erp_store_departments
+		FROM 'F:\Workspace\Data-Analysis-Projects-2025\Sales-Logistics-Analytics-DWH\datasets\ERP\departments.csv'
 		WITH (
 			FIRSTROW = 2,
 			FIELDTERMINATOR = ',',
@@ -56,12 +56,12 @@ BEGIN
 		PRINT '>> --------------'
 
 		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.store_locations'
-		TRUNCATE TABLE bronze.store_locations
+		PRINT '>> Truncating Table: bronze.erp_store_locations'
+		TRUNCATE TABLE bronze.erp_store_locations
 
-		PRINT '>> Inserting Data into: bronze.store_locations'
-		BULK INSERT bronze.store_locations
-		FROM 'F:\Workspace\Data-Analysis-Projects-2025\Sales-Logistics-Analytics-DWH\datasets\Store\locations.csv'
+		PRINT '>> Inserting Data into: bronze.erp_store_locations'
+		BULK INSERT bronze.erp_store_locations
+		FROM 'F:\Workspace\Data-Analysis-Projects-2025\Sales-Logistics-Analytics-DWH\datasets\ERP\locations.csv'
 		WITH (
 			FIRSTROW = 2,
 			FIELDTERMINATOR = ',',

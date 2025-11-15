@@ -12,25 +12,24 @@ CREATE TABLE bronze.crm_customers
 	[Customer Segment] NVARCHAR(50)
 )
 
-IF OBJECT_ID('bronze.store_departments', 'U') IS NOT NULL
-	DROP TABLE bronze.store_departments
-CREATE TABLE bronze.store_departments
+IF OBJECT_ID('bronze.erp_store_departments', 'U') IS NOT NULL
+	DROP TABLE bronze.erp_store_departments
+CREATE TABLE bronze.erp_store_departments
 (
 	[Department Id] INT,
 	[Department Name] NVARCHAR(50)
 )
 
-IF OBJECT_ID('bronze.store_locations', 'U') IS NOT NULL
-	DROP TABLE bronze.store_locations
-CREATE TABLE bronze.store_locations
+IF OBJECT_ID('bronze.erp_store_locations', 'U') IS NOT NULL
+	DROP TABLE bronze.erp_store_locations
+CREATE TABLE bronze.erp_store_locations
 (
-	[Department Id] INT,
-	Latitude DECIMAL(11, 8),
-    Longitude DECIMAL(11, 8),
-	[Customer City] NVARCHAR(50),
 	[Customer Country] NVARCHAR(50),
 	[Customer State] NVARCHAR(5),
-	[Customer Street] NVARCHAR(255)
+	[Customer City] NVARCHAR(50),
+	[Customer Street] NVARCHAR(255),
+	Latitude DECIMAL(11, 8),
+    Longitude DECIMAL(11, 8)
 )
 
 IF OBJECT_ID('bronze.erp_order_headers', 'U') IS NOT NULL
@@ -49,7 +48,9 @@ CREATE TABLE bronze.erp_order_headers
 	[Order State] NVARCHAR(50),
 	[Order City] NVARCHAR(50),
 	[Order Zip Code] NVARCHAR(20),
-	[Customer Stree] NVARCHAR(255)
+	[Customer State] NVARCHAR(5),
+	[Customer City] NVARCHAR(50),
+	[Customer Street] NVARCHAR(255),
 )
 
 
@@ -63,10 +64,10 @@ CREATE TABLE bronze.erp_order_items
 	[Order Item Quantity] INT,
 	[Order Item product Price] DECIMAL(18, 4),
 	[Order Item Discount] DECIMAL(18, 4),
-	[Order Item Discount Rate] DECIMAL(5, 4),
+	[Order Item Discount Rate] DECIMAL(10, 4),
 	[Order Item Total] DECIMAL(18, 4),
 	[Benefit per Order] DECIMAL(18, 4),
-	[Order Item Profit Ratio] DECIMAL(5, 4),
+	[Order Item Profit Ratio] DECIMAL(10, 4),
 	[Sales] DECIMAL(18, 4),
 	[Order Profit Per Order] DECIMAL(18, 4),
 	[Sales per customer] DECIMAL(18, 4)
