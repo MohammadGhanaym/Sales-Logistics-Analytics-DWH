@@ -9,7 +9,8 @@ CREATE TABLE bronze.crm_customers
 	[Customer Lname] NVARCHAR(50),
 	[Customer Email] NVARCHAR(255),
 	[Customer Password] NVARCHAR(255),
-	[Customer Segment] NVARCHAR(50)
+	[Customer Segment] NVARCHAR(50),
+	[Customer Zipcode] NVARCHAR(20)
 )
 
 IF OBJECT_ID('bronze.erp_store_departments', 'U') IS NOT NULL
@@ -38,7 +39,6 @@ CREATE TABLE bronze.erp_order_headers
 (
 	[Order Id] INT,
 	[Order Customer Id] INT,
-	[Order Department Id] INT,
 	[Order Date] DATETIME,
 	[Order Status] NVARCHAR(50),
 	Type NVARCHAR(50),
@@ -61,6 +61,7 @@ CREATE TABLE bronze.erp_order_items
 	[Order Item Id] INT,
 	[Order Id] INT,
 	[Order Item Cardprod Id] INT,
+	[Order Department Id] INT,
 	[Order Item Quantity] INT,
 	[Order Item product Price] DECIMAL(18, 4),
 	[Order Item Discount] DECIMAL(18, 4),

@@ -14,17 +14,17 @@ SELECT
     @MaxDate = MAX(DateValue)
 FROM (
     -- Get all purchase timestamps from the orders table
-    SELECT [Order Date] AS DateValue FROM [DWH_Supply_Chain].bronze.erp_order_headers
+    SELECT [Order Date] AS DateValue FROM [DWH_Supply_Chain].silver.erp_order_headers
     UNION ALL
     -- Get all won dates from the deals table
-    SELECT [shipping date] AS DateValue FROM [DWH_Supply_Chain].bronze.erp_shipping
+    SELECT [shipping date] AS DateValue FROM [DWH_Supply_Chain].silver.erp_shipping
 ) AS AllDates;
 
 -- =================================================================
 -- Step 3: Create the dim_date table structure
 -- =================================================================
-IF OBJECT_ID('silver.dim_date', 'U') IS NOT NULL
-    DELETE FROM silver.dim_date;
+IF OBJECT_ID('gold.dim_date', 'U') IS NOT NULL
+    DELETE FROM gold.dim_date;
 
 -- =================================================================
 -- Step 4: Use a loop to populate the dim_date table using the variables
@@ -33,16 +33,16 @@ DECLARE @CurrentDate DATE = @MinDate;
 
 WHILE @CurrentDate <= @MaxDate
 BEGIN
-    INSERT INTO silver.[dim_date] (
-        [Date_SK],
-        [FullDate],
-        [DayNumberOfWeek],
-        [DayNameOfWeek],
-        [DayNumberOfMonth],
-        [MonthName],
-        [MonthNumberOfYear],
-        [Quarter],
-        [Year]
+    INSERT INTO gold.[dim_date] (
+        date_key,
+        full_date,
+        date_number_of_week,
+        day_name_of_week,
+        day_number_of_month,
+        month_name,
+        month_number_of_year,
+        [quarter],
+        [year]
     )
     VALUES (
         CONVERT(INT, CONVERT(VARCHAR(8), @CurrentDate, 112)), -- Creates YYYYMMDD key

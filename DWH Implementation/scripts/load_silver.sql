@@ -25,18 +25,21 @@ BEGIN
 			[Customer Id],
 			[Customer Fname],
 			[Customer Lname],
-			[Customer Segment]
+			[Customer Segment],
+			[Customer Zipcode]
 		)
 		SELECT 
 			[Customer Id],
-			UPPER(LEFT([Customer Fname], 1)) + 
-			LOWER(SUBSTRING([Customer Fname], 2, LEN([Customer Fname])-1)) AS Customer_FirstName,
-			UPPER(LEFT([Customer Lname], 1)) + 
-			LOWER(SUBSTRING([Customer Lname], 2, LEN([Customer Lname])-1)) AS Customer_LastName,
+			ISNULL(UPPER(LEFT([Customer Fname], 1)) + 
+			LOWER(SUBSTRING([Customer Fname], 2, LEN([Customer Fname])-1)), 'Unknown') AS Customer_FirstName,
+			ISNULL(UPPER(LEFT([Customer Lname], 1)) + 
+			LOWER(SUBSTRING([Customer Lname], 2, LEN([Customer Lname])-1)), 'Unknown') AS Customer_LastName,
 			CASE WHEN TRIM([Customer Segment]) = 'consumer' THEN 'Consumer'
 			WHEN TRIM([Customer Segment]) = 'home office' THEN 'Home Office'
+			WHEN [Customer Segment] IS NULL THEN 'Unknown'
 			ELSE TRIM([Customer Segment])
-			END [Customer Segment]
+			END [Customer Segment],
+			ISNULL(RIGHT('00000' + REPLACE(TRIM([Customer Zipcode]), '.0', ''), 5), 'N/A') AS [Customer_Zipcode]
 		FROM (
 		SELECT *,
 			ROW_NUMBER() OVER(PARTITION BY [Customer Id] ORDER BY [Customer Id]) keep_flag
@@ -64,7 +67,7 @@ BEGIN
 		)
 		SELECT 
 			[Department Id],
-			[Department Name]
+			ISNULL([Department Name], 'Unknown') [Department Name]
 		FROM [bronze].[erp_store_departments]
 
 		SET @end_time = GETDATE();
@@ -88,15 +91,18 @@ BEGIN
 		SELECT 
 			CASE 
 				WHEN [Customer Country] = 'EE. UU.' THEN 'United States'
+				WHEN [Customer Country] IS NULL THEN 'Unknown'
 				ELSE [Customer Country] END [Customer Country],
 			CASE 
 				WHEN [Customer State] IN ('95758', '91732') THEN [Customer City]
+				WHEN [Customer State] IS NULL THEN 'Unknown'
 				ELSE [Customer State] END [Customer State],
 			CASE 
 				WHEN [Customer State] IN ('95758', '91732') THEN [Customer Street]
+				WHEN [Customer City] IS NULL THEN 'Unknown'
 				ELSE [Customer City] END [Customer City],
 			CASE 
-				WHEN [Customer State] IN ('95758', '91732') THEN 'Unknown'
+				WHEN [Customer State] IN ('95758', '91732') OR [Customer Street] IS NULL THEN 'Unknown'
 				ELSE [Customer Street] END [Customer Street],
 			[Latitude],
 			[Longitude]
@@ -116,7 +122,6 @@ BEGIN
 		(
 			[Order Id],
 			[Order Customer Id],
-			[Order Department Id],
 			[Order Date],
 			[Order Status],
 			Type,
@@ -133,7 +138,6 @@ BEGIN
 		SELECT 
 			[Order Id],
 			[Order Customer Id],
-			[Order Department Id],
 			[Order Date],
 			LOWER(TRIM([Order Status])) AS [Order Status],
 			LOWER(TRIM([Type])) AS [Type],
@@ -168,15 +172,17 @@ BEGIN
 			[Order Country],
 			[Order State],
 			[Order City],
-			[Order Zip Code],
+			ISNULL(RIGHT('00000' + REPLACE(TRIM([Order Zip Code]), '.0', ''), 5), 'N/A') AS [Order Zip Code],
 			CASE 
 				WHEN [Customer State] IN ('95758', '91732') THEN [Customer City]
+				WHEN [Customer State] IS NULL THEN 'Unknown'
 				ELSE [Customer State] END [Customer State],
 			CASE 
 				WHEN [Customer State] IN ('95758', '91732') THEN [Customer Street]
+				WHEN [Customer City] IS NULL THEN 'Unknown'
 				ELSE [Customer City] END [Customer City],
 			CASE 
-				WHEN [Customer State] IN ('95758', '91732') THEN 'Unknown'
+				WHEN [Customer State] IN ('95758', '91732') OR [Customer Street] IS NULL THEN 'Unknown'
 				ELSE [Customer Street] END [Customer Street]
 		  FROM [bronze].[erp_order_headers]
 
@@ -194,6 +200,7 @@ BEGIN
 			[Order Item Id],
 			[Order Id],
 			[Order Item Cardprod Id],
+			[Order Department Id],
 			[Order Item Quantity],
 			[Order Item product Price],
 			[Order Item Discount],
@@ -207,6 +214,7 @@ BEGIN
 			[Order Item Id],
 			[Order Id],
 			[Order Item Cardprod Id],
+			[Order Department Id],
 			[Order Item Quantity],
 			[Order Item product Price],
 			[Order Item Discount],
@@ -236,7 +244,7 @@ BEGIN
 		)
 		SELECT 
   			[Category Id],
-			[Category Name]
+			ISNULL([Category Name], 'Unknown') [Category Name]
 		FROM bronze.erp_categories
 		WHERE [Category Id] != 37 -- the other key for `Electronics`
 		UNION ALL
@@ -297,10 +305,10 @@ BEGIN
 		)
 		SELECT [Order Id]
 			  ,[shipping date]
-			  ,[Shipping Mode]
+			  ,ISNULL([Shipping Mode], 'Unknown') [Shipping Mode]
 			  ,[Days for shipping (real)]
 			  ,[Days for shipping (scheduled)]
-			  ,[Delivery Status]
+			  ,ISNULL([Delivery Status], 'Unknown') [Delivery Status]
 			  ,[Late_delivery_risk]
 		 FROM [DWH_Supply_Chain].[bronze].[erp_shipping]
 		SET @end_time = GETDATE();

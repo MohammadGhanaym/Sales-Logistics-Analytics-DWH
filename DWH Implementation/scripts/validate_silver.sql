@@ -6,6 +6,7 @@ USE DWH_Supply_Chain
 -- Check the data are loaded into the correct columns
 SELECT *
 FROM silver.crm_customers
+
 -- Check for NULLS or duplicates in the primary key
 -- Expectation: No result
 SELECT 
@@ -60,6 +61,7 @@ FROM silver.erp_store_locations
 -- ==================================
 SELECT *
 FROM silver.erp_order_headers
+
 
 SELECT *
 FROM silver.[erp_order_headers] 

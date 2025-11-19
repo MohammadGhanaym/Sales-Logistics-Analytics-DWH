@@ -1,6 +1,6 @@
-
-IF OBJECT_ID('silver.dim_time', 'U') IS NOT NULL
-    DELETE FROM silver.dim_time;
+USE [DWH_Supply_Chain]
+IF OBJECT_ID('gold.dim_time', 'U') IS NOT NULL
+    DELETE FROM gold.dim_time;
 
 
 DECLARE @Hour INT = 0;
@@ -12,16 +12,16 @@ BEGIN
     SET @Minute = 0;
     WHILE @Minute < 60
     BEGIN
-        DECLARE @TimeValue TIME = CAST(RIGHT('0' + CAST(@Hour AS VARCHAR(2)), 2) 
+        DECLARE @time_value TIME = CAST(RIGHT('0' + CAST(@Hour AS VARCHAR(2)), 2) 
                                     + ':' + RIGHT('0' + CAST(@Minute AS VARCHAR(2)), 2) 
                                     + ':00' AS TIME);
 
-        DECLARE @TimeKey INT = @Hour * 10000 + @Minute * 100;  -- e.g., 134500 for 1:45 PM
+        DECLARE @time_key INT = @Hour * 10000 + @Minute * 100;  -- e.g., 134500 for 1:45 PM
         DECLARE @Hour12 INT = CASE WHEN @Hour = 0 THEN 12 
                                    WHEN @Hour > 12 THEN @Hour - 12 
                                    ELSE @Hour END;
         DECLARE @AMPM CHAR(2) = CASE WHEN @Hour < 12 THEN 'AM' ELSE 'PM' END;
-        DECLARE @HourMinute CHAR(5) = RIGHT('0' + CAST(@Hour AS VARCHAR(2)), 2) 
+        DECLARE @hour_minute CHAR(5) = RIGHT('0' + CAST(@Hour AS VARCHAR(2)), 2) 
                                       + ':' + RIGHT('0' + CAST(@Minute AS VARCHAR(2)), 2);
         DECLARE @Shift VARCHAR(20) = CASE 
                                         WHEN @Hour BETWEEN 6 AND 13 THEN 'Morning'
@@ -29,8 +29,8 @@ BEGIN
                                         ELSE 'Night'
                                      END;
 
-        INSERT INTO silver.dim_time (TimeKey, TimeValue, Hour, Minute, Second, Hour12, AMPM, HourMinute, Shift)
-        VALUES (@TimeKey, @TimeValue, @Hour, @Minute, @Second, @Hour12, @AMPM, @HourMinute, @Shift);
+        INSERT INTO gold.dim_time (time_key, time_value, Hour, Minute, Second, Hour12, AMPM, hour_minute, Shift)
+        VALUES (@time_key, @time_value, @Hour, @Minute, @Second, @Hour12, @AMPM, @hour_minute, @Shift);
 
         SET @Minute = @Minute + 1;
     END

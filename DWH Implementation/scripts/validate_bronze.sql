@@ -111,15 +111,6 @@ SELECT *
 FROM bronze.erp_order_headers
 WHERE [Order Customer Id] NOT IN (SELECT DISTINCT [Customer Id] FROM silver.crm_customers)
 
-SELECT * 
-FROM bronze.erp_order_headers
-WHERE [Order Department Id] NOT IN (SELECT DISTINCT [Department Id] FROM silver.erp_store_departments)
-
--- Check the [Order Department Id] do not have null
-SELECT *
-FROM [bronze].[erp_order_headers]
-WHERE [Order Department Id] IS NULL
-
 -- Check the [Order Date] do not have null
 SELECT *
 FROM [bronze].[erp_order_headers]
@@ -166,6 +157,15 @@ WHERE [Order Id] NOT IN (SELECT DISTINCT [Order Id] FROM [silver].[erp_order_hea
 SELECT *
 FROM bronze.erp_order_items
 WHERE [Order Item Cardprod Id] NOT IN (SELECT DISTINCT [Product Card Id] FROM [bronze].[erp_products])
+
+SELECT * 
+FROM bronze.erp_order_items
+WHERE [Order Department Id] NOT IN (SELECT DISTINCT [Department Id] FROM silver.erp_store_departments)
+
+-- Check the [Order Department Id] do not have null
+SELECT *
+FROM [bronze].erp_order_items
+WHERE [Order Department Id] IS NULL
 
 -- Validate business rules
 -- [Order Item Quantity] * [Order Item product Price] = [Sales]
