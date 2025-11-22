@@ -1,0 +1,53 @@
+Sales YTD Growth % = 
+VAR kpi_value = [Total Sales]
+VAR Total_Sales_YTD = TOTALYTD(kpi_value, dim_date[full_date])
+VAR Max_Date = CALCULATE(MAX(dim_date[full_date]), fact_sales)
+VAR Pre_Max_Date = EDATE(Max_Date, -12)
+VAR Pre_Sales_YTD = CALCULATE(kpi_value, 
+                                REMOVEFILTERS(dim_date),
+                                dim_date[full_date] <= Pre_Max_Date, 
+                                dim_date[full_date] >= DATE(YEAR(Pre_Max_Date), 1, 1)
+                                )
+RETURN DIVIDE(Total_Sales_YTD - Pre_Sales_YTD, Pre_Sales_YTD, 0)
+
+
+
+Sales vs PYTD = SWITCH(
+    TRUE(),
+    [Sales YTD Growth %] > 0, UNICHAR(11165) & " " & FORMAT([Sales YTD Growth %], "0.0%"),
+    [Sales YTD Growth %] < 0, UNICHAR(11167) & " " & FORMAT([Sales YTD Growth %], "0.0%"),
+    FORMAT([Sales YTD Growth %], "0.0%")
+)
+
+
+Sales MoM % = 
+VAR Pre_Sales = CALCULATE([Total Sales], DATEADD(dim_date[full_date], -1, MONTH))
+RETURN DIVIDE(
+    [Total Sales] - Pre_Sales,
+    Pre_Sales,
+    0
+)
+
+
+Total Profit YTD Growth % = 
+VAR kpi_value = [Total Profit]
+VAR Total_Profit_YTD = TOTALYTD(kpi_value, dim_date[full_date])
+VAR Max_Date = CALCULATE(MAX(dim_date[full_date]), fact_sales)
+VAR Pre_Max_Date = EDATE(Max_Date, -12)
+VAR Pre_Profit_YTD = CALCULATE(kpi_value, 
+                                REMOVEFILTERS(dim_date),
+                                dim_date[full_date] <= Pre_Max_Date, 
+                                dim_date[full_date] >= DATE(YEAR(Pre_Max_Date), 1, 1)
+                                )
+RETURN DIVIDE(Total_Profit_YTD - Pre_Profit_YTD, Pre_Profit_YTD, 0)
+
+
+
+Total Profit vs PYTD = SWITCH(
+    TRUE(),
+    [Total Profit YTD Growth %] > 0, UNICHAR(11165) & " " & FORMAT([Total Profit YTD Growth %], "0.0%"),
+    [Total Profit YTD Growth %] < 0, UNICHAR(11167) & " " & FORMAT([Total Profit YTD Growth %], "0.0%"),
+    FORMAT([Total Profit YTD Growth %], "0.0%")
+)
+
+#0FA240

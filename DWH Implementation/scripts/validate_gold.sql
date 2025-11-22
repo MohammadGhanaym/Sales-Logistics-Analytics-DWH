@@ -32,8 +32,8 @@ FROM gold.dim_transactions_info
 
 SELECT *
 FROM gold.fact_sales
-WHERE order_date_key IN (SELECT date_key FROM gold.dim_date)
-AND order_time_key IN (SELECT time_key FROM gold.dim_time)
+WHERE order_date_key NOT IN (SELECT date_key FROM gold.dim_date)
+OR order_time_key NOT IN (SELECT time_key FROM gold.dim_time)
 
 
 SELECT
