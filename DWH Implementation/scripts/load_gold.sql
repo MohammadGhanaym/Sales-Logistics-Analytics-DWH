@@ -81,6 +81,7 @@ BEGIN
 
         -- === Load dim_customers ===
         SET @start_time = GETDATE();
+
         SET IDENTITY_INSERT gold.dim_customers ON;
         INSERT INTO gold.dim_customers
         (
@@ -89,22 +90,124 @@ BEGIN
             customer_first_name,
             customer_last_name, 
             customer_segment, 
-            customer_zipcode
+            customer_zipcode,
+            first_purchase_date,
+            last_purchase_date,
+            recency,
+            frequency,
+            monetary,
+            customer_status,
+            customer_segment_rfm
         )
-        VALUES (-1, -1, 'Unknown', 'Unknown', 'Unknown', 'N/A');
+        VALUES (-1, -1, 'Unknown', 'Unknown', 'Unknown', 'N/A', '1900-01-01', '1900-01-01', 0, 0, 0, 'Unknown', 'Unknown');
         SET IDENTITY_INSERT gold.dim_customers OFF;
         -- Let IDENTITY auto-generate keys
+
+        -- 1. The 'Analysis Date' is the last date any sales happened
+        DECLARE @AnalysisDate DATE;
+        SELECT @AnalysisDate = MAX([Order Date]) FROM silver.erp_order_headers;
+
+        -- 2. Prepare the customer aggregates (RFM)
+        WITH RFM_Base AS (
+                    SELECT 
+                        [Order Customer Id] AS customer_id,
+                        MIN([Order Date]) AS first_purchase_date,
+                        MAX([Order Date]) AS last_purchase_date,
+                        COUNT(DISTINCT oh.[Order Id]) AS frequency,
+                        SUM(Sales) AS monetary,
+                        DATEDIFF(DAY, MAX([Order Date]), @AnalysisDate) AS recency
+                    FROM 
+                        silver.erp_order_items oi
+                    JOIN 
+                        silver.erp_order_headers oh ON oi.[Order Id] = oh.[Order Id]
+                    GROUP BY 
+                        [Order Customer Id]
+                ),
+                RFM_Score AS (
+                    SELECT 
+                        *,
+                        -- Recency: High Days = Bad (1), Low Days = Good (5)
+                        NTILE(5) OVER(ORDER BY recency DESC) AS r_score,
+                        -- Frequency: Low Count = Bad (1), High Count = Good (5)
+                        NTILE(5) OVER(ORDER BY frequency ASC) AS f_score,
+                        -- Monetary: Low Spend = Bad (1), High Spend = Good (5)
+                        NTILE(5) OVER(ORDER BY monetary ASC) AS m_score
+                    FROM RFM_Base
+                )
+
         INSERT INTO gold.dim_customers 
         (
             customer_id, 
             customer_first_name, 
             customer_last_name, 
             customer_segment, 
-            customer_zipcode
+            customer_zipcode,
+
+            first_purchase_date,
+            last_purchase_date,
+            recency,
+            frequency,
+            monetary,
+            customer_status,
+            customer_segment_rfm
         )
         SELECT 
-            [Customer Id], [Customer Fname], [Customer Lname], [Customer Segment], [Customer Zipcode]
-        FROM [silver].[crm_customers];
+            [Customer Id], 
+            [Customer Fname], 
+            [Customer Lname], 
+            [Customer Segment], 
+            [Customer Zipcode],
+            s.first_purchase_date,
+            s.last_purchase_date,
+            ISNULL(s.recency, 9999),
+            ISNULL(s.frequency, 0),
+            ISNULL(s.monetary, 0),
+
+            -- Status Logic (12 Month Window)
+            CASE 
+                WHEN s.recency <= 365 THEN 'Active'
+                ELSE 'Churned'
+            END AS customer_status,
+
+            -- Standard 8-Segment RFM Logic
+            -- Segmentation Logic (Hierarchy matters: Top match wins)
+            CASE 
+                -- 1. Lost: Bottom 20% Recency (Score 1)
+                -- If they haven't bought in a long time, they are Lost, regardless of past behavior.
+                WHEN s.r_score = 1 THEN 'Lost'
+
+                -- 2. Champions: Active (Score 3+) AND High Value (Score 4+)
+                -- We relaxed Recency to >= 3 to catch active VIPs who haven't bought in the last month.
+                WHEN s.r_score >= 3 AND s.m_score >= 4 AND s.frequency >= 4 THEN 'Champions'
+                
+                -- 3. Loyal: High Frequency (4+)
+                -- Since Champions already caught the High Spend + High Freq people,
+                -- this bucket catches Frequent buyers who spend LESS (or have lower Recency).
+                WHEN s.frequency >= 4 THEN 'Loyal'
+                
+                -- 4. Big Spenders: High Spend (Score 4+)
+                -- Since Champions and Loyal caught the Frequent buyers,
+                -- this bucket catches High Spenders with LOW Frequency (1-3 orders).
+                WHEN s.m_score >= 4 THEN 'Big Spenders'
+                
+                -- 5. New: High Recency (4-5) but Low Frequency (1-3)
+                -- These are recent visitors who are just starting out.
+                WHEN s.r_score >= 4 AND s.frequency <= 3 THEN 'New'
+                
+                -- 6. Promising: Good Recency (Score 3+)
+                -- The catch-all for active customers who didn't qualify as VIP, Loyal, or New.
+                -- They have average spend and average frequency.
+                WHEN s.r_score >= 3 THEN 'Promising'
+                
+                -- 7. At Risk: The Leftovers (Mostly Recency Score 2)
+                -- They aren't "Lost" (Score 1) yet, but they aren't "Promising" (Score 3+) either.
+                -- They are drifting away.
+                ELSE 'At Risk'
+            END AS customer_segment_rfm
+        FROM [silver].[crm_customers] c
+        LEFT JOIN RFM_Score s
+        ON c.[Customer Id] = s.customer_id
+
         SET @end_time = GETDATE();
         PRINT '>> gold.dim_customers loaded in ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS VARCHAR) + 's';
 
